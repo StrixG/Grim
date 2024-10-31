@@ -24,6 +24,7 @@ import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.protocol.ConnectionState;
+import com.github.retrooper.packetevents.protocol.attribute.Attributes;
 import com.github.retrooper.packetevents.protocol.item.ItemStack;
 import com.github.retrooper.packetevents.protocol.item.type.ItemType;
 import com.github.retrooper.packetevents.protocol.item.type.ItemTypes;
@@ -347,7 +348,7 @@ public class CheckManagerListener extends PacketListenerAbstract {
             // Additionally, only yaw/pitch matters: https://github.com/GrimAnticheat/Grim/issues/1275#issuecomment-1872444018
             // 1.9+ isn't impacted by this packet as much.
             if (PacketEvents.getAPI().getServerManager().getVersion().isOlderThanOrEquals(ServerVersion.V_1_9)) {
-                if (GrimAPI.INSTANCE.getConfigManager().getConfig().getBooleanElse("cancel-duplicate-packet", true)) {
+                if (player.isCancelDuplicatePacket()) {
                     player.packetStateData.cancelDuplicatePacket = true;
                 }
             } else {
@@ -357,7 +358,7 @@ public class CheckManagerListener extends PacketListenerAbstract {
 
             player.packetStateData.lastPacketWasOnePointSeventeenDuplicate = true;
 
-            if (!GrimAPI.INSTANCE.getConfigManager().isIgnoreDuplicatePacketRotation()) {
+            if (!player.isIgnoreDuplicatePacketRotation()) {
                 if (player.xRot != location.getYaw() || player.yRot != location.getPitch()) {
                     player.lastXRot = player.xRot;
                     player.lastYRot = player.yRot;
@@ -427,7 +428,7 @@ public class CheckManagerListener extends PacketListenerAbstract {
         if (WrapperPlayClientPlayerFlying.isFlying(event.getPacketType())) {
             WrapperPlayClientPlayerFlying flying = new WrapperPlayClientPlayerFlying(event);
             Location pos = flying.getLocation();
-            boolean ignoreRotation = player.packetStateData.lastPacketWasOnePointSeventeenDuplicate && GrimAPI.INSTANCE.getConfigManager().isIgnoreDuplicatePacketRotation();
+            boolean ignoreRotation = player.packetStateData.lastPacketWasOnePointSeventeenDuplicate && player.isIgnoreDuplicatePacketRotation();
             handleFlying(player, pos.getX(), pos.getY(), pos.getZ(), ignoreRotation ? player.xRot : pos.getYaw(), ignoreRotation ? player.yRot : pos.getPitch(), flying.hasPositionChanged(), flying.hasRotationChanged(), flying.isOnGround(), teleportData, event);
         }
 
@@ -781,7 +782,7 @@ public class CheckManagerListener extends PacketListenerAbstract {
         Vector3d startingPos = new Vector3d(player.x, player.y + player.getEyeHeight(), player.z);
         Vector startingVec = new Vector(startingPos.getX(), startingPos.getY(), startingPos.getZ());
         Ray trace = new Ray(player, startingPos.getX(), startingPos.getY(), startingPos.getZ(), player.xRot, player.yRot);
-        final double distance = player.compensatedEntities.getSelf().getBlockInteractRange();
+        final double distance = player.compensatedEntities.getSelf().getAttributeValue(Attributes.PLAYER_BLOCK_INTERACTION_RANGE);
         Vector endVec = trace.getPointAtDistance(distance);
         Vector3d endPos = new Vector3d(endVec.getX(), endVec.getY(), endVec.getZ());
 
